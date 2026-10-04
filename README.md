@@ -1,71 +1,124 @@
 # SimApproximation-ML
 
-# Machine Learning Approximation of Simulation in Re-Manufacturing
+**Learning-based surrogate modeling for discrete-event simulation in remanufacturing**
 
-## Overview
+SimApproximation-ML is an academic research prototype that explores whether an artificial neural network can act as a surrogate for a discrete-event simulation (DES) of a remanufacturing system. The goal is to learn the relationship between simulation inputs and system-level KPIs so that candidate scenarios can be evaluated without running the full simulation every time.
 
-This project leverages Machine Learning (ML) techniques to approximate discrete event simulation (DES) in remanufacturing systems. By replacing time-intensive simulation processes with an efficient ML model, the project aims to significantly reduce computational time while maintaining high accuracy.
+The repository contains the implementation of the ML workflow: data preprocessing, neural architecture search, model training and evaluation, prediction, post-processing, and a lightweight desktop GUI.
 
-The project incorporates a complete pipeline:
-1. **Data Preprocessing**: Cleansing and transforming simulation data.
-2. **Neural Architecture Search (NAS)**: Using AutoML to find optimal model architectures.
-3. **Model Training and Evaluation**: Training the selected models and evaluating their performance using metrics such as MAE, R², and MAPE.
-4. **Post-Processing**: Visualizing results and comparing model performance.
+## Project pipeline
 
-## Features
+```mermaid
+flowchart LR
+    A[DES scenario data] --> B[JSON input]
+    B --> C[Preprocessing]
+    C --> D[Scaling and train/test split]
+    D --> E[AutoML / NAS]
+    E --> F[ANN surrogate model]
+    F --> G[Evaluation]
+    F --> H[GUI prediction]
+    G --> I[MAE / R² / MAPE]
+    E --> J[Tuner comparison]
+```
 
-- **Automated Machine Learning (AutoML)**: Supports multiple tuners, including Random Search, Greedy, Bayesian Optimization, and Hyperband.
-- **GUI Interface**: A user-friendly interface built with `tkinter` for managing data preprocessing, training, evaluation, and prediction workflows.
-- **Data Processing**: Flexible preprocessing options with scaling techniques like `MinMaxScaler` and `StandardScaler`.
-- **Visualization**: Detailed performance visualizations, including MAE and training time comparisons.
+## What this project demonstrates
 
-## Requirements
+- **Simulation-to-ML workflow** — converts DES scenario outputs into a supervised regression problem.
+- **Multi-output regression** — predicts several production-system KPIs from a shared set of scenario parameters.
+- **Automated architecture search** — compares Random Search, Hyperband, Greedy, and Bayesian tuner strategies through AutoKeras.
+- **Evaluation in the original output scale** — inverse-transforms predictions before computing regression metrics.
+- **Experiment post-processing** — extracts tuner trial data and visualizes validation error and search-time trade-offs.
+- **End-to-end interface** — provides a Tkinter GUI for preprocessing, training, evaluation, prediction, and result inspection.
 
-To replicate the environment, use the provided `environment.yml` file:
+## Repository structure
+
+```text
+.
+├── main.py                         # Tkinter application and end-to-end workflow
+├── module_data_preprocessing.py    # JSON parsing, cleaning, scaling, splitting
+├── module_automl.py                # AutoKeras search, training, evaluation, prediction
+├── module_data_postprocessing.py   # Trial analysis and visualization
+├── environment.yml                 # Reproducible Python environment
+├── User_Guide.pdf                  # Usage guide for the prototype
+├── LICENSE
+└── README.md
+```
+
+## Inputs and outputs
+
+The current implementation is configured around four simulation inputs:
+
+- `AmountServer`
+- `Coolingdefect`
+- `InterarrivalTime`
+- `defekteModulanzahl`
+
+and predicts ten system-level outputs:
+
+- `AverageServerUtilisation`
+- `AverageFlowTime`
+- `OEE`
+- `TotalAverageQueueLength`
+- `ProcessingTimeAverage`
+- `WaitingTimeAverage`
+- `MovingTimeAverage`
+- `FailedTimeAverage`
+- `BlockedTimeAverage`
+- `Throughput`
+
+These names reflect the original research simulation and can be adapted in the preprocessing and GUI configuration for other DES datasets.
+
+## AutoML workflow
+
+The surrogate model is implemented with AutoKeras `StructuredDataRegressor`. For each tuner strategy, the framework can:
+
+1. search candidate network architectures,
+2. train the candidate models,
+3. record search/training time,
+4. load the best exported model,
+5. evaluate predictions after inverse scaling,
+6. compare tuner behavior during post-processing.
+
+The project uses MAE and R² as general regression metrics and also reports MAPE where meaningful. Percentage errors should be interpreted carefully for targets at or near zero.
+
+## Setup
+
+The original project was developed with Python 3.10 and a TensorFlow/AutoKeras stack from 2024.
 
 ```bash
 conda env create -f environment.yml
-conda activate your_env_name
-```
-
-## Installation and Usage
-
-### Setup
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/hyandnn/SimApproximation-ML.git
-   cd SimApproximation-ML
-   ```
-
-2. Install dependencies:
-   ```bash
-   conda env create -f environment.yml
-   conda activate your_env_name
-   ```
-
-### Running the GUI
-
-To launch the graphical interface:
-```bash
+conda activate sim-approximation-ml
 python main.py
 ```
 
-### User Guide
+> **Compatibility note:** TensorFlow and AutoKeras version compatibility can be sensitive on newer Python, CUDA, and operating-system stacks. The environment file intentionally keeps the original major package versions instead of tracking the latest releases.
 
-Refer to the included [User_Guide.pdf](./User_Guide.pdf) for detailed instructions on using the pipeline.
+## Typical workflow
 
-### Key Modules
+1. Select one or more simulation JSON files in the GUI.
+2. Mark each dataset as `train`, `test`, or `split`.
+3. Run preprocessing and choose MinMax or Standard scaling.
+4. Start the AutoML search and model training.
+5. Evaluate trained models on held-out simulation scenarios.
+6. Compare search strategies and inspect generated plots.
+7. Load a selected model and run interactive predictions from the GUI.
 
-- **Data Preprocessing** (`module_data_preprocessing.py`): Handles JSON data loading, extraction, cleaning, and scaling.
-- **AutoML** (`module_automl.py`): Manages the NAS process, model training, evaluation, and predictions.
-- **Post-Processing** (`module_data_postprocessing.py`): Generates visualizations for MAE and training time comparisons.
+## Scope and limitations
 
-## Outputs
+This repository is a **research prototype**, not a production inference service.
 
-- Preprocessed data saved as `.npz` files for training and testing.
-- Visualization results, including MAE plots (`mae_plot_diff.png`) and MAE vs. training time comparisons (`mae_time_comparison.png`).
+- The underlying DES model and research datasets are not included.
+- Predictive quality is KPI-dependent; a single aggregate error does not characterize every output equally well.
+- MAPE is not robust for zero or near-zero targets, so MAE/R² and per-KPI inspection remain important.
+- The current implementation uses fixed parameter names from the original study rather than a fully schema-driven configuration.
+- AutoML search can be computationally expensive because tuner strategies may train many candidate networks.
 
-## Contributions
+## Research context
 
-Developed by [Haoling Yang](mailto:haoling.yang@rwth-aachen.de) as part of an initiative to integrate machine learning techniques into industrial simulation workflows.
+This implementation was developed by **Haoling Yang** as part of an academic research project at RWTH Aachen University on machine-learning approximation of discrete-event simulation in remanufacturing.
+
+The associated research report and underlying simulation artifacts are intentionally **not redistributed in this public repository**. This repository focuses on the software implementation and reproducible workflow.
+
+## License
+
+This repository is released under the MIT License. See [LICENSE](LICENSE).
