@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Runtime logs and generated preprocessing artifacts
+*.log
+train_data_*.npz
+test_data_*.npz
+scaler_X.pkl
+scaler_y.pkl
+
+# AutoKeras search/training artifacts
+project_random/
+project_hyperband/
+project_greedy/
+project_bayesian/
+
+# Generated plots / local result files
+mae_plot_diff.png
+mae_time_comparison.png
