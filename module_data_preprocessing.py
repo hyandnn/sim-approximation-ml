@@ -1,6 +1,6 @@
 """
 Filename: module_data_preprocessing.py
-Author: Yang, Haoling (haoling.yang@rwth-aachen.de)
+Author: Haoling Yang
 Date Created: September 15, 2024
 
 Description:
